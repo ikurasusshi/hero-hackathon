@@ -1,0 +1,1 @@
+# ffmpegで16kHz mono WAVへ変換（後で追加）

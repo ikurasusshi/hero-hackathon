@@ -1,0 +1,1 @@
+# openai-whisper 版（後で追加）
