@@ -1,0 +1,1 @@
+# whisper.cpp 版（後で追加）
