@@ -1,1 +1,54 @@
 /* ダークUI、レイアウト、ハイライト等 */
+:root{
+  --bg:#0f1221; --panel:#171a2e; --muted:#a7b0c0; --text:#f2f5ff;
+  --primary:#6aa7ff; --accent:#9bffd0; --border:rgba(255,255,255,.12);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#0b0e1a,#11132a);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans JP,Arial}
+.header,.footer{padding:12px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.header h1{font-size:18px;margin:0}
+.header small{opacity:.7}
+.controls{margin-left:auto;display:flex;align-items:center;gap:8px}
+.timer{opacity:.9;padding:6px 10px;border-radius:10px;background:#0b1022;border:1px solid var(--border)}
+.btn{background:#222746;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#7bb0ff,#6a9aff);color:#0a1022;font-weight:700}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px}
+.panel-header h2{font-size:16px;margin:0 0 8px 0}
+
+.transcript-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:65vh;overflow:auto}
+.transcript-item{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;background:#121631;border:1px solid var(--border);border-radius:10px}
+.transcript-item .text{flex:1;line-height:1.6}
+.transcript-item .time{min-width:64px;text-align:right;opacity:.9;font-variant-numeric:tabular-nums}
+.highlight{outline:2px solid var(--accent);box-shadow:0 0 0 3px rgba(155,255,208,.25) inset}
+
+.slide-editor,.todo-editor{display:flex;flex-direction:column;gap:8px}
+.slide-editor input,.slide-editor textarea,.todo-editor textarea{width:100%;padding:10px;border-radius:10px;background:#0f1433;color:var(--text);border:1px solid var(--border)}
+.muted{color:var(--muted)}
+.sep{border:0;border-top:1px dashed var(--border);margin:16px 0}
+
+.todo-list{list-style:none;padding:0;margin:8px 0 0 0;display:flex;flex-direction:column;gap:8px}
+.todo-item{display:flex;align-items:center;gap:10px;background:#121631;border:1px solid var(--border);border-radius:10px;padding:8px 10px}
+.todo-item.completed{opacity:.6;text-decoration:line-through}
+
+@media (max-width: 1000px){
+  .grid{grid-template-columns:1fr}
+}
+
+/* --- Slides UI --- */
+.slides{ display:grid; grid-template-columns: 260px 1fr; gap:12px; }
+.slide-list{ border-right:1px dashed var(--border); padding-right:8px; }
+.slide-list .actions{ margin-bottom:8px; }
+#slideList{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+.slide-item{
+  padding:10px; border:1px solid var(--border); border-radius:10px;
+  background:#121631; cursor:pointer;
+}
+.slide-item.active{ border-color:#8fc7ff; background:#182048; }
+.slide-item .title{ font-weight:700; display:block; }
+.slide-item .meta{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+.slide-editor{ min-height:280px; }
+.editor.hidden{ display:none; }

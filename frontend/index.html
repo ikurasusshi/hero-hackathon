@@ -1,1 +1,75 @@
 <!-- 2カラムUI（左：文字起こし、右：スライド/ToDo/タイムスタンプ） -->
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会議の内容まとめアプリ - フェーズ1</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+
+<body>
+    <header class="header">
+        <h1>会議の内容まとめアプリ <small>Phase 1</small></h1>
+        <div class="controls">
+            <button id="startBtn" class="btn primary">文字起こし開始</button>
+            <button id="stopBtn" class="btn" disabled>停止</button>
+            <span class="timer">⏱ <span id="timer">00:00</span></span>
+        </div>
+    </header>
+
+    <main class="grid">
+        <!-- 左：文字起こし -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2>リアルタイム文字起こし（ダミー）</h2>
+            </div>
+            <ul id="transcriptList" class="transcript-list"></ul>
+        </section>
+
+        <!-- 右：スライド編集＋ToDo -->
+        <section class="panel">
+            <div class="panel-header">
+                <h2>スライド編集 &amp; ToDo</h2>
+            </div>
+
+            <!-- スライド一覧＋エディタ -->
+            <div class="slides">
+                <aside class="slide-list">
+                    <div class="actions">
+                        <button id="btnAddTopic" class="btn small">＋ 議題スライド</button>
+                    </div>
+                    <ul id="slideList"></ul>
+                </aside>
+
+                <section class="slide-editor">
+                    <div id="emptyEditor" class="muted">左のリストからスライドを選択してください。</div>
+
+                    <div id="editorTopic" class="editor hidden">
+                        <label>議題タイトル</label>
+                        <input id="topicTitle" type="text" placeholder="例：議題1：要件定義の確認">
+                        <label>要点</label>
+                        <textarea id="topicContent" rows="6" placeholder="箇条書きで要点を記入（Ctrl+Enter でも確定）"></textarea>
+                        <p id="stamp" class="muted">編集完了時刻: -</p>
+                    </div>
+                </section>
+            </div>
+
+            <hr class="sep" />
+
+            <!-- 既存の ToDo 欄はそのまま活かす -->
+            <div class="todo-editor">
+                <label>ToDo（1行＝1タスク）</label>
+                <textarea id="todoContent" rows="6" placeholder="例：資料ドラフト作成&#10;例：来週の会議日程を調整"></textarea>
+                <ul id="todoList" class="todo-list"></ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">© 2025 会議の内容まとめアプリ – Phase 1</footer>
+
+    <script type="module" src="assets/js/app.js"></script>
+</body>
+
+</html>
