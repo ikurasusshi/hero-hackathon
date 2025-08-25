@@ -28,41 +28,16 @@
             <ul id="transcriptList" class="transcript-list"></ul>
         </section>
 
-        <!-- 右：スライド編集＋ToDo -->
+        <!-- 右：スライドツリー全体表示 -->
         <section class="panel">
             <div class="panel-header">
-                <h2>スライド編集 &amp; ToDo</h2>
+                <h2>スライド構造（マインドマップ風）</h2>
             </div>
-
-            <!-- スライド一覧＋エディタ -->
-            <div class="slides">
-                <aside class="slide-list">
-                    <div class="actions">
-                        <button id="btnAddTopic" class="btn small">＋ 議題スライド</button>
-                    </div>
-                    <ul id="slideList"></ul>
-                </aside>
-
-                <section class="slide-editor">
-                    <div id="emptyEditor" class="muted">左のリストからスライドを選択してください。</div>
-
-                    <div id="editorTopic" class="editor hidden">
-                        <label>議題タイトル</label>
-                        <input id="topicTitle" type="text" placeholder="例：議題1：要件定義の確認">
-                        <label>要点</label>
-                        <textarea id="topicContent" rows="6" placeholder="箇条書きで要点を記入（Ctrl+Enter でも確定）"></textarea>
-                        <p id="stamp" class="muted">編集完了時刻: -</p>
-                    </div>
-                </section>
-            </div>
-
-            <hr class="sep" />
-
-            <!-- 既存の ToDo 欄はそのまま活かす -->
-            <div class="todo-editor">
-                <label>ToDo（1行＝1タスク）</label>
-                <textarea id="todoContent" rows="6" placeholder="例：資料ドラフト作成&#10;例：来週の会議日程を調整"></textarea>
-                <ul id="todoList" class="todo-list"></ul>
+            <div class="slide-tree-area">
+                <div class="actions">
+                    <button id="btnAddTopic" class="btn small">＋ 議題スライド</button>
+                </div>
+                <div id="slideList"></div>
             </div>
         </section>
     </main>
