@@ -49,6 +49,120 @@ body{margin:0;background:linear-gradient(180deg,#0b0e1a,#11132a);color:var(--tex
 .slide-item.active{ border-color:#8fc7ff; background:#182048; }
 .slide-item .title{ font-weight:700; display:block; }
 .slide-item .meta{ font-size:11px; color:var(--muted); margin-top:2px; }
+.slide-item .btn.small {
+  font-size: 11px;
+  padding: 2px 8px;
+  margin-left: 6px;
+  margin-top: 0;
+  margin-bottom: 0;
+  vertical-align: middle;
+}
 
-.slide-editor{ min-height:280px; }
+.slide-editor {
+  min-height: 320px;
+  padding: 24px 32px;
+  background: #181e3a;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  font-size: 1.15em;
+}
+.editor input, .editor textarea {
+  font-size: 1.1em;
+  padding: 14px;
+  border-radius: 12px;
+}
+.editor label {
+  font-size: 1.05em;
+  margin-bottom: 6px;
+  display: block;
+}
 .editor.hidden{ display:none; }
+
+.slide-tree-view {
+  padding: 32px 24px;
+  background: #181e3a;
+  border-radius: 18px;
+  min-height: 800px;
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.13);
+  font-size: 1.18em;
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 1000px;
+  overflow: auto;
+}
+.slide-tree-view svg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.slide-tree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 32px;
+  padding: 0;
+  border-radius: 16px;
+  background: #232a4a;
+  border: 2px solid transparent;
+  transition: border 0.2s, background 0.2s;
+  width: 320px;
+  aspect-ratio: 4/3;
+  min-height: 240px;
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 1;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
+}
+.slide-tree-node.selected {
+  border: 2.5px solid #8fc7ff;
+  background: #243a5c;
+  box-shadow: 0 0 0 3px #8fc7ff33;
+}
+.slide-tree-node .title {
+  font-size: 1.15em;
+  font-weight: bold;
+  margin: 18px 16px 6px 16px;
+  width: calc(100% - 32px);
+  word-break: break-all;
+}
+.slide-tree-node .content {
+  font-size: 1em;
+  color: var(--text);
+  margin: 0 16px 0 16px;
+  flex: 1;
+  width: calc(100% - 32px);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.slide-tree-node .meta {
+  font-size: 0.95em;
+  color: var(--muted);
+  margin: 8px 16px 0 16px;
+}
+.slide-tree-node .btn.small {
+  font-size: 12px;
+  padding: 3px 10px;
+  margin-left: 8px;
+}
+.inline-edit-input, .inline-edit-textarea {
+  width: calc(100% - 32px);
+  margin: 0 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #8fc7ff;
+  background: #232a4a;
+  color: var(--text);
+  font-size: 1.1em;
+  font-weight: bold;
+  outline: none;
+  margin-bottom: 8px;
+}
+.inline-edit-textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-size: 1em;
+  font-weight: normal;
+}

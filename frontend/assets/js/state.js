@@ -3,8 +3,8 @@ export const state = {
   msElapsed: 0,
   transcripts: [], // {id, timeText, tsMs, text}
   slides: [
-    // 初期スライドを1枚用意
-    { id: "s1", type: "topic", title: "議題1", content: "", editedAt: "-" },
+    // 初期スライドを1枚用意（親なし＝ルート）
+    { id: "s1", type: "topic", title: "議題1", content: "", editedAt: "-", parentId: null },
   ],
   selectedSlideId: "s1",
   todos: [], // {id, title, done}
