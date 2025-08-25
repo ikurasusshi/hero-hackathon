@@ -4,11 +4,11 @@ import { msToClock } from "./timer.js";
 
 let demoTimer = null;
 
-export function commitTranscript(text) {
+export function commitTranscriptAt(text, tsMs) {
   const item = {
     id: "t_" + Math.random().toString(36).slice(2, 9),
-    tsMs: state.msElapsed,
-    timeText: msToClock(state.msElapsed),
+    tsMs,
+    timeText: msToClock(tsMs),
     text,
   };
   state.transcripts.push(item);
@@ -35,6 +35,12 @@ export function commitTranscript(text) {
   }
 }
 
+// 既存の便宜用：現在時刻で追記
+export function commitTranscript(text) {
+  commitTranscriptAt(text, state.msElapsed);
+}
+
+// ダミーはそのまま維持（フォールバック用）
 export function startDummyTranscript() {
   const lines = [
     "（ダミー）会議を開始します。",
@@ -49,7 +55,6 @@ export function startDummyTranscript() {
     i++;
   }, 3000);
 }
-
 export function stopDummyTranscript() {
   if (demoTimer) {
     clearInterval(demoTimer);
