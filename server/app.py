@@ -1,15 +1,14 @@
 # Flask/FastAPI（後で追加）
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os, uuid, time
+import os, uuid, time, subprocess, tempfile
+import whisper
 
 app = Flask(__name__)
-CORS(app)  # 開発用：どこからでも叩けるようにする
+CORS(app)
 
-# 受け取った音声を保存したい場合は True
-SAVE_CHUNKS = False
-CHUNK_DIR = os.path.join(os.path.dirname(__file__), "runtime", "audio_chunks")
-os.makedirs(CHUNK_DIR, exist_ok=True)
+# Whisperモデルをロード（smallが軽くておすすめ）
+model = whisper.load_model("small")  # "tiny" "base" "small" "medium" "large" から選択可
 
 @app.get("/health")
 def health():
@@ -17,36 +16,37 @@ def health():
 
 @app.post("/api/chunk")
 def api_chunk():
-    """
-    3秒ごとなどで送られてくる音声ブロブを受け取り、
-    いまはダミー文字列を返す（Whisperはまだ接続しない）。
-    """
     if "audio" not in request.files:
         return jsonify({"ok": False, "error": "no audio"}), 400
 
     t_ms = int(request.form.get("t_ms", "0"))
     audio = request.files["audio"]
 
-    # デバッグ用に保存（任意）
-    if SAVE_CHUNKS:
-        fname = f"{int(time.time()*1000)}_{uuid.uuid4().hex}.webm"
-        audio.save(os.path.join(CHUNK_DIR, fname))
+    # 一時ファイルに保存
+    with tempfile.TemporaryDirectory() as tmpdir:
+        webm_path = os.path.join(tmpdir, "chunk.webm")
+        wav_path = os.path.join(tmpdir, "chunk.wav")
+        audio.save(webm_path)
 
-    # ここで本来は ffmpeg → whisper する。いまはダミー結果を返す。
-    dummy_texts = [
-        "（サーバ）要件定義の確認を続けます。",
-        "（サーバ）UI設計について議論しましょう。",
-        "（サーバ）ToDoにタスクを追加してください。"
-    ]
-    # 適当に時刻に応じて種類を変える
-    text = dummy_texts[(t_ms // 3000) % len(dummy_texts)]
+        # ffmpegで16kHz mono WAVに変換
+        cmd = ["ffmpeg", "-y", "-i", webm_path, "-ar", "16000", "-ac", "1", wav_path]
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        # Whisperで文字起こし
+        result = model.transcribe(wav_path, language="ja")
+
+    # 結果を返す
     return jsonify({
         "ok": True,
         "results": [
-            { "text": text, "start_ms": t_ms, "end_ms": t_ms + 3000, "lang": "ja" }
+            {
+                "text": result["text"],
+                "start_ms": t_ms,
+                "end_ms": t_ms + 3000,
+                "lang": result.get("language", "ja")
+            }
         ],
-        "model": "stub"
+        "model": "whisper-small"
     })
 
 if __name__ == "__main__":
