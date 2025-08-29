@@ -16,6 +16,8 @@
             <button id="startBtn" class="btn primary">文字起こし開始</button>
             <button id="stopBtn" class="btn" disabled>停止</button>
             <span class="timer">⏱ <span id="timer">00:00</span></span>
+            <button id="btnShowMemoList" class="btn">メモ一覧</button>
+            <button id="btnGotoMemoPage" class="btn">メモ一覧ページへ</button>
         </div>
     </header>
 
@@ -50,6 +52,15 @@
             </div>
         </section>
     </main>
+
+    <!-- メモ一覧モーダル -->
+    <div id="memoListModal" class="modal hidden">
+      <div class="modal-content">
+        <button id="btnCloseMemoList" class="btn small" style="float:right;">閉じる</button>
+        <h2>メモ一覧</h2>
+        <ul id="memoListUl"></ul>
+      </div>
+    </div>
 
     <footer class="footer">© 2025 会議の内容まとめアプリ – Phase 1</footer>
 
