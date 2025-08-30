@@ -53,4 +53,9 @@ function wire() {
 document.addEventListener("DOMContentLoaded", async () => {
   await detectServer();
   wire();
+  const btnGoto = document.getElementById("btnGotoMemoPage");
+  if (btnGoto)
+    btnGoto.addEventListener("click", () => {
+      window.location.href = "memo.html";
+    });
 });
