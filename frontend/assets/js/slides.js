@@ -1,5 +1,5 @@
 // スライドCRUD・編集完了でeditedAt付与・リンクプレビュー
-import { state } from "./state.js";
+import { state, saveLocal } from "./state.js";
 import { msToClock } from "./timer.js";
 
 const els = {
@@ -34,6 +34,7 @@ function stampEditedNow() {
   s.editedAt = msToClock(state.msElapsed); // ★ 現在のタイマーを記録
   updateStamp();
   renderSlideList(); // リスト側の表示（editedAt）も更新
+  saveLocal(); // 編集完了時に保存
 }
 
 function renderSlideList() {
@@ -137,9 +138,10 @@ function renderSlideList() {
     btnAddChild.textContent = "＋子";
     btnAddChild.addEventListener("click", (e) => {
       e.stopPropagation();
-      addTopicSlide(slide.id, true);
+      addTopicSlide(slide.id, true, "child");
     });
     node.appendChild(btnAddChild);
+
     // 兄弟追加ボタン（親がいる場合のみ）
     if (slide.parentId !== null) {
       const btnAddSibling = document.createElement("button");
@@ -147,7 +149,7 @@ function renderSlideList() {
       btnAddSibling.textContent = "＋兄弟";
       btnAddSibling.addEventListener("click", (e) => {
         e.stopPropagation();
-        addTopicSlide(slide.parentId, true);
+        addTopicSlide(slide.parentId, true, "sibling");
       });
       node.appendChild(btnAddSibling);
     }
@@ -159,6 +161,17 @@ function renderSlideList() {
       x,
       y,
     });
+
+    // 削除ボタン
+    const btnDelete = document.createElement("button");
+    btnDelete.className = "delete-btn";
+    btnDelete.textContent = "×";
+    btnDelete.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteSlide(slide.id);
+    });
+    node.appendChild(btnDelete);
+
     // 子ノードを下に並べる
     const children = state.slides.filter((s) => s.parentId === slide.id);
     let childY = y;
@@ -214,6 +227,7 @@ function finishInlineEdit(slide, value, field) {
   editingNodeId = null;
   editingField = null;
   renderSlideList();
+  saveLocal();
 }
 
 function renderEditor() {
@@ -248,11 +262,25 @@ function selectSlide(id) {
   }
 }
 
-function addTopicSlide(parentId = null, focusEdit = false) {
+function addTopicSlide(parentId = null, focusEdit = false, relation = "child") {
+  let baseTitle = "";
+  if (parentId) {
+    const parent = state.slides.find((s) => s.id === parentId);
+    if (parent) {
+      if (relation === "child") {
+        baseTitle = parent.title + "-子";
+      } else if (relation === "sibling") {
+        baseTitle = parent.title + "-兄弟";
+      }
+    }
+  } else {
+    baseTitle = `議題${state.slides.length + 1}`;
+  }
+
   const s = {
     id: uid(),
     type: "topic",
-    title: `議題${state.slides.length + 1}`,
+    title: baseTitle || `議題${state.slides.length + 1}`,
     content: "",
     editedAt: "-",
     parentId: parentId,
@@ -347,6 +375,7 @@ export function initSlides() {
       if (!s) return;
       s.title = e.target.value;
       renderSlideList();
+      saveLocal();
     });
     els.topicTitle.addEventListener("blur", stampEditedNow);
     els.topicTitle.addEventListener("keydown", (e) => {
@@ -359,6 +388,7 @@ export function initSlides() {
       const s = currentSlide();
       if (!s) return;
       s.content = e.target.value;
+      saveLocal();
     });
     els.topicContent.addEventListener("blur", stampEditedNow);
     els.topicContent.addEventListener("keydown", (e) => {
@@ -373,4 +403,29 @@ export function initSlides() {
       e.preventDefault();
     }
   });
+}
+
+function deleteSlide(id) {
+  // 1. 削除対象を探す
+  const idx = state.slides.findIndex((s) => s.id === id);
+  if (idx === -1) return;
+
+  // 2. 子ノードは親なし(null)に付け替える（残す）
+  const slide = state.slides[idx];
+  state.slides.forEach((s) => {
+    if (s.parentId === slide.id) {
+      s.parentId = slide.parentId; // 祖父母に付け替え or null
+    }
+  });
+
+  // 3. 対象スライドを削除
+  state.slides.splice(idx, 1);
+
+  // 4. 選択スライドが消えた場合の処理
+  if (state.selectedSlideId === id) {
+    state.selectedSlideId = state.slides[0]?.id || null;
+  }
+
+  renderSlideList();
+  renderEditor();
 }
