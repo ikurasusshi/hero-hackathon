@@ -4,6 +4,7 @@ import { initTodos } from "./todos.js";
 import { startMockRecognition, stopMockRecognition } from "./recorder.mock.js";
 import { startMediaRecorder, stopMediaRecorder } from "./recorder.media.js";
 import { ping } from "./api.js";
+import { loadLocal } from "./state.js";
 
 const SERVER_BASE = "http://127.0.0.1:5000"; // Flaskをここで起動する前提
 let useServer = false; // 自動検出の結果で切替
@@ -51,6 +52,8 @@ function wire() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  loadLocal(); // ← ★ これを追加（localStorageから復元）
+
   await detectServer();
   wire();
   const btnGoto = document.getElementById("btnGotoMemoPage");

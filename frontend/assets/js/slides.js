@@ -1,5 +1,5 @@
 // スライドCRUD・編集完了でeditedAt付与・リンクプレビュー
-import { state } from "./state.js";
+import { saveLocal, state } from "./state.js";
 import { msToClock } from "./timer.js";
 
 const els = {
@@ -31,20 +31,21 @@ function updateStamp() {
 function stampEditedNow() {
   const s = currentSlide();
   if (!s) return;
-  s.editedAt = msToClock(state.msElapsed); // ★ 現在のタイマーを記録
+  s.editedAt = msToClock(state.msElapsed);
   updateStamp();
-  renderSlideList(); // リスト側の表示（editedAt）も更新
+  renderSlideList();
+  saveLocal();
 }
 
 function renderSlideList() {
   if (!els.slideList) return;
   els.slideList.innerHTML = "";
   els.slideList.className = "slide-tree-view";
-  // ノード配置用座標計算
+
   const nodeElements = [];
   const nodeSize = { w: 320, h: 180, gapX: 80, gapY: 40 };
   let yOffset = 40;
-  // 再帰的にノードを配置
+
   function placeNode(slide, depth, parentX, parentY) {
     const x = parentX + (depth === 0 ? 0 : nodeSize.w + nodeSize.gapX);
     const y = parentY;
@@ -56,20 +57,18 @@ function renderSlideList() {
     node.style.top = y + "px";
     node.setAttribute("data-slide-id", slide.id);
 
-    // タイトル編集
+    // --- タイトル ---
     if (editingNodeId === slide.id && editingField === "title") {
       const input = document.createElement("input");
       input.type = "text";
       input.value = slide.title || "";
       input.className = "inline-edit-input";
       input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          finishInlineEdit(slide, input.value, "title");
-        }
+        if (e.key === "Enter") finishInlineEdit(slide, input.value, "title");
       });
-      input.addEventListener("blur", () => {
-        finishInlineEdit(slide, input.value, "title");
-      });
+      input.addEventListener("blur", () =>
+        finishInlineEdit(slide, input.value, "title")
+      );
       setTimeout(() => input.focus(), 0);
       node.appendChild(input);
     } else {
@@ -81,28 +80,50 @@ function renderSlideList() {
         e.stopPropagation();
         startInlineEdit(slide.id, "title");
       });
-      title.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          startInlineEdit(slide.id, "title");
-          e.preventDefault();
-        }
-      });
       node.appendChild(title);
     }
 
-    // 内容編集
+    // --- 削除ボタン ---
+    const btnDelete = document.createElement("button");
+    btnDelete.textContent = "×";
+    btnDelete.className = "btn small delete-btn";
+    btnDelete.style.position = "absolute";
+    btnDelete.style.top = "4px";
+    btnDelete.style.right = "4px";
+    btnDelete.style.padding = "2px 6px";
+    btnDelete.style.fontSize = "12px";
+    btnDelete.style.background = "#b33";
+    btnDelete.style.color = "#fff";
+    btnDelete.style.borderRadius = "50%";
+    btnDelete.title = "このスライドを削除";
+    btnDelete.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = state.slides.findIndex((s) => s.id === slide.id);
+      if (idx >= 0) {
+        state.slides.splice(idx, 1);
+        if (state.selectedSlideId === slide.id) {
+          state.selectedSlideId =
+            state.slides.length > 0 ? state.slides[0].id : null;
+        }
+        renderSlideList();
+        renderEditor();
+        saveLocal();
+      }
+    });
+    node.appendChild(btnDelete);
+
+    // --- 内容 ---
     if (editingNodeId === slide.id && editingField === "content") {
       const textarea = document.createElement("textarea");
       textarea.value = slide.content || "";
       textarea.className = "inline-edit-textarea";
       textarea.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey)
           finishInlineEdit(slide, textarea.value, "content");
-        }
       });
-      textarea.addEventListener("blur", () => {
-        finishInlineEdit(slide, textarea.value, "content");
-      });
+      textarea.addEventListener("blur", () =>
+        finishInlineEdit(slide, textarea.value, "content")
+      );
       setTimeout(() => textarea.focus(), 0);
       node.appendChild(textarea);
     } else {
@@ -114,12 +135,6 @@ function renderSlideList() {
         e.stopPropagation();
         startInlineEdit(slide.id, "content");
       });
-      content.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          startInlineEdit(slide.id, "content");
-          e.preventDefault();
-        }
-      });
       node.appendChild(content);
     }
 
@@ -127,39 +142,38 @@ function renderSlideList() {
     meta.className = "meta";
     meta.textContent = `編集: ${slide.editedAt || "-"}`;
     node.appendChild(meta);
+
     node.addEventListener("click", (e) => {
       e.stopPropagation();
       selectSlide(slide.id);
     });
-    // 子追加ボタン
+
+    // --- 子ボタン ---
     const btnAddChild = document.createElement("button");
     btnAddChild.className = "btn small";
     btnAddChild.textContent = "＋子";
     btnAddChild.addEventListener("click", (e) => {
       e.stopPropagation();
-      addTopicSlide(slide.id, true);
+      addTopicSlide(slide.id, true, "child");
     });
     node.appendChild(btnAddChild);
-    // 兄弟追加ボタン（親がいる場合のみ）
+
+    // --- 兄弟ボタン ---
     if (slide.parentId !== null) {
       const btnAddSibling = document.createElement("button");
       btnAddSibling.className = "btn small";
       btnAddSibling.textContent = "＋兄弟";
       btnAddSibling.addEventListener("click", (e) => {
         e.stopPropagation();
-        addTopicSlide(slide.parentId, true);
+        addTopicSlide(slide.id, true, "sibling");
       });
       node.appendChild(btnAddSibling);
     }
+
     els.slideList.appendChild(node);
-    nodeElements.push({
-      id: slide.id,
-      parentId: slide.parentId,
-      el: node,
-      x,
-      y,
-    });
-    // 子ノードを下に並べる
+    nodeElements.push({ id: slide.id, parentId: slide.parentId, x, y });
+
+    // 再帰：子を描画
     const children = state.slides.filter((s) => s.parentId === slide.id);
     let childY = y;
     children.forEach((child, i) => {
@@ -167,55 +181,32 @@ function renderSlideList() {
       placeNode(child, depth + 1, x, childY);
     });
   }
-  // ルートノードから配置
+
+  // --- ルートノード配置 ---
   state.slides
     .filter((s) => s.parentId === null)
     .forEach((s, i) => {
       if (i > 0) yOffset += nodeSize.h + nodeSize.gapY;
       placeNode(s, 0, 40, yOffset);
     });
-  // 線描画
-  setTimeout(
-    () =>
-      drawTreeLines(
-        els.slideList.querySelector("#slideTreeLines"),
-        nodeElements
-      ),
-    0
-  );
-  // SVG線がなければ追加
-  let svg = document.getElementById("slideTreeLines");
-  if (!svg) {
-    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("id", "slideTreeLines");
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.left = "0";
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    svg.style.pointerEvents = "none";
-    els.slideList.appendChild(svg);
-  } else {
-    svg.innerHTML = "";
-  }
 }
 
+// --- Inline編集 ---
 function startInlineEdit(id, field) {
   editingNodeId = id;
   editingField = field;
   renderSlideList();
 }
 function finishInlineEdit(slide, value, field) {
-  if (field === "title") {
-    slide.title = value || "(無題の議題)";
-  } else if (field === "content") {
-    slide.content = value;
-  }
+  if (field === "title") slide.title = value || "(無題の議題)";
+  else if (field === "content") slide.content = value;
   editingNodeId = null;
   editingField = null;
   renderSlideList();
+  saveLocal();
 }
 
+// --- エディタ ---
 function renderEditor() {
   const s = currentSlide();
   if (!s) {
@@ -224,75 +215,76 @@ function renderEditor() {
     return;
   }
   if (els.emptyEditor) els.emptyEditor.classList.add("hidden");
-
   if (els.editorTopic) els.editorTopic.classList.remove("hidden");
   if (els.topicTitle) els.topicTitle.value = s.title || "";
   if (els.topicContent) els.topicContent.value = s.content || "";
-  if (els.stamp && typeof updateStamp === "function") updateStamp();
+  if (els.stamp) updateStamp();
 }
 
+// --- 選択 ---
 function selectSlide(id) {
   state.selectedSlideId = id;
   renderSlideList();
   renderEditor();
-
-  // 議題クリック → 左の最新発言をハイライト（分かりやすい効果）
-  const list = document.getElementById("transcriptList");
-  if (list && list.lastElementChild) {
-    [...list.children].forEach((li) => li.classList.remove("highlight"));
-    list.lastElementChild.classList.add("highlight");
-    list.lastElementChild.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }
 }
 
-function addTopicSlide(parentId = null, focusEdit = false) {
+// --- スライド追加 ---
+function addTopicSlide(targetId = null, focusEdit = false, mode = "root") {
+  let title,
+    parentId = null;
+
+  if (mode === "child" && targetId) {
+    const parent = state.slides.find((s) => s.id === targetId);
+    title = `${parent?.title || "議題"}-子`;
+    parentId = parent.id;
+  } else if (mode === "sibling" && targetId) {
+    const target = state.slides.find((s) => s.id === targetId);
+    const parent = state.slides.find((s) => s.id === target.parentId);
+    title = `${parent?.title || "議題"}-兄弟`;
+    parentId = parent ? parent.id : null;
+  } else {
+    if (!state.topicCounter) state.topicCounter = 1;
+    title = `議題${state.topicCounter++}`;
+  }
+
   const s = {
     id: uid(),
     type: "topic",
-    title: `議題${state.slides.length + 1}`,
+    title,
     content: "",
     editedAt: "-",
-    parentId: parentId,
+    parentId,
   };
+
   state.slides.push(s);
   state.selectedSlideId = s.id;
-  if (focusEdit) {
-    editingNodeId = s.id;
-  }
+  if (focusEdit) editingNodeId = s.id;
   renderSlideList();
   renderEditor();
+  saveLocal();
 }
 
+// --- 矢印キー移動 ---
 function moveSelectionByArrow(key) {
   const current = currentSlide();
   if (!current) return;
-  // 兄弟リスト
   const siblings = state.slides.filter((s) => s.parentId === current.parentId);
   const idx = siblings.findIndex((s) => s.id === current.id);
-  if (key === "ArrowUp" && idx > 0) {
-    selectSlide(siblings[idx - 1].id);
-  } else if (key === "ArrowDown" && idx < siblings.length - 1) {
+  if (key === "ArrowUp" && idx > 0) selectSlide(siblings[idx - 1].id);
+  else if (key === "ArrowDown" && idx < siblings.length - 1)
     selectSlide(siblings[idx + 1].id);
-  } else if (key === "ArrowLeft" && current.parentId) {
-    // 親ノードへ
+  else if (key === "ArrowLeft" && current.parentId)
     selectSlide(current.parentId);
-  } else if (key === "ArrowRight") {
-    // 最初の子ノードへ
+  else if (key === "ArrowRight") {
     const children = state.slides.filter((s) => s.parentId === current.id);
-    if (children.length > 0) {
-      selectSlide(children[0].id);
-    }
+    if (children.length > 0) selectSlide(children[0].id);
   }
 }
 
-// drawTreeLinesはノードのx,yを使って線を描画
+// --- 線描画 ---
 function drawTreeLines(svg, nodeElements) {
   if (!svg) return;
   svg.innerHTML = "";
-  // 親IDごとに子ノードをまとめる
   const parentToChildren = {};
   nodeElements.forEach((n) => {
     if (!n.parentId) return;
@@ -302,12 +294,11 @@ function drawTreeLines(svg, nodeElements) {
   Object.entries(parentToChildren).forEach(([parentId, children]) => {
     const parent = nodeElements.find((p) => p.id === parentId);
     if (!parent) return;
-    const px = parent.x + 320; // 親ノードの右中央x
-    const py = parent.y + 90; // 親ノードの中央y
+    const px = parent.x + 320;
+    const py = parent.y + 90;
     children.forEach((child) => {
-      const cx = child.x; // 子ノードの左中央x
-      const cy = child.y + 90; // 子ノードの中央y
-      // 親の右中央→水平→子の左中央
+      const cx = child.x;
+      const cy = child.y + 90;
       const hLine = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "line"
@@ -323,8 +314,8 @@ function drawTreeLines(svg, nodeElements) {
   });
 }
 
+// --- 初期化 ---
 export function initSlides() {
-  // 要素参照
   els.btnAddTopic = document.getElementById("btnAddTopic");
   els.slideList = document.getElementById("slideList");
   els.emptyEditor = document.getElementById("emptyEditor");
@@ -333,11 +324,9 @@ export function initSlides() {
   els.topicContent = document.getElementById("topicContent");
   els.stamp = document.getElementById("stamp");
 
-  // 初期描画
   renderSlideList();
   renderEditor();
 
-  // イベント結線
   if (els.btnAddTopic)
     els.btnAddTopic.addEventListener("click", () => addTopicSlide());
 
@@ -347,11 +336,9 @@ export function initSlides() {
       if (!s) return;
       s.title = e.target.value;
       renderSlideList();
+      saveLocal();
     });
     els.topicTitle.addEventListener("blur", stampEditedNow);
-    els.topicTitle.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "Enter") stampEditedNow();
-    });
   }
 
   if (els.topicContent) {
@@ -359,14 +346,11 @@ export function initSlides() {
       const s = currentSlide();
       if (!s) return;
       s.content = e.target.value;
+      saveLocal();
     });
     els.topicContent.addEventListener("blur", stampEditedNow);
-    els.topicContent.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "Enter") stampEditedNow();
-    });
   }
 
-  // キーボード矢印ナビ
   document.addEventListener("keydown", (e) => {
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
       moveSelectionByArrow(e.key);
