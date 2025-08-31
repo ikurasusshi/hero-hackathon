@@ -1,5 +1,5 @@
 // スライドCRUD・編集完了でeditedAt付与・リンクプレビュー
-import { saveLocal, state } from "./state.js";
+import { saveLocal, state } from "./state.js;
 import { msToClock } from "./timer.js";
 
 const els = {
@@ -247,7 +247,7 @@ function addTopicSlide(targetId = null, focusEdit = false, mode = "root") {
     title = `議題${state.topicCounter++}`;
   }
 
-  const s = {
+const s = {
     id: uid(),
     type: "topic",
     title,
@@ -357,4 +357,29 @@ export function initSlides() {
       e.preventDefault();
     }
   });
+}
+
+function deleteSlide(id) {
+  // 1. 削除対象を探す
+  const idx = state.slides.findIndex((s) => s.id === id);
+  if (idx === -1) return;
+
+  // 2. 子ノードは親なし(null)に付け替える（残す）
+  const slide = state.slides[idx];
+  state.slides.forEach((s) => {
+    if (s.parentId === slide.id) {
+      s.parentId = slide.parentId; // 祖父母に付け替え or null
+    }
+  });
+
+  // 3. 対象スライドを削除
+  state.slides.splice(idx, 1);
+
+  // 4. 選択スライドが消えた場合の処理
+  if (state.selectedSlideId === id) {
+    state.selectedSlideId = state.slides[0]?.id || null;
+  }
+
+  renderSlideList();
+  renderEditor();
 }
