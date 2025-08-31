@@ -5,10 +5,10 @@ import os, uuid, time, subprocess, tempfile
 import whisper
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Whisperモデルをロード（smallが軽くておすすめ）
-model = whisper.load_model("small")  # "tiny" "base" "small" "medium" "large" から選択可
+model = whisper.load_model("base")  # "tiny" "base" "small" "medium" "large" から選択可
 
 @app.get("/health")
 def health():
@@ -30,10 +30,10 @@ def api_chunk():
 
         # ffmpegで16kHz mono WAVに変換
         cmd = ["ffmpeg", "-y", "-i", webm_path, "-ar", "16000", "-ac", "1", wav_path]
-        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
         # Whisperで文字起こし
-        result = model.transcribe(wav_path, language="ja")
+        result = model.transcribe(wav_path, language="ja", no_speech_threshold=0.0)
 
     # 結果を返す
     return jsonify({
